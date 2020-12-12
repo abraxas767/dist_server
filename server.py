@@ -126,6 +126,19 @@ class SocketServer:
             await websocket.send("success")
             return True
 
+    # send a message to all connected controllers
+    async def send_to_controllers(self, message):
+        for obj in self.controllers:
+            await obj.get('socket').send(message)
+
+    # send a message to connected converter
+    async def send_to_converter(self, message):
+        # check if there is a converter
+        if self.converter == {}:
+            return 
+        # if there is, send message to it
+        else:
+            await self.converter.get('socket').send(message)
 
     # ------- HANDLER --------
     async def handle(self, websocket, path):
@@ -153,6 +166,7 @@ class SocketServer:
                             if not success:
                                 return
                             print("{0} authenticated!".format(self.get_connection_entry(websocket)[1].get('name')))
+                            continue
                 else:
                     authenticated = True
                                             
@@ -169,16 +183,11 @@ class SocketServer:
                 # if current websocket is converter 
                 if c_type == 'converter':
                     # forward message to all controllers 
-                    for obj in self.controllers:
-                        await obj.get('socket').send(message)
+                    await self.send_to_controllers(message)
                 # if current websocket is controller
                 elif c_type == 'controller':
-                    # check if there is a converter
-                    if self.converter == {}:
-                        continue 
-                    # if there is, send all messages to it
-                    else:
-                        await self.converter.get('socket').send(message)
+                    # forward message to converter 
+                    await self.send_to_converter(message)
                 elif c_type == None:
                     return
         
