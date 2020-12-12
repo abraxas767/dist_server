@@ -68,8 +68,9 @@ class SocketServer:
     def is_auth_msg(self, msg):
         try:
             msg = json.loads(msg)
-            if not len(msg) == len(self.AUTH_MSG_KEYS):
-                return False
+            for key, value in msg.items():
+                if not key in self.AUTH_MSG_KEYS:
+                    return False
             else:
                 return True
         except json.decoder.JSONDecodeError:
