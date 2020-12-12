@@ -129,7 +129,8 @@ class SocketServer:
     # send a message to all connected controllers
     async def send_to_controllers(self, message):
         for obj in self.controllers:
-            await obj.get('socket').send(message)
+            if not obj.get('socket').closed:
+                await obj.get('socket').send(message)
 
     # send a message to connected converter
     async def send_to_converter(self, message):
@@ -138,12 +139,21 @@ class SocketServer:
             return 
         # if there is, send message to it
         else:
-            await self.converter.get('socket').send(message)
+            if not self.converter.get('socket').closed:
+                await self.converter.get('socket').send(message)
     
     # send a message to all conncetions
     async def send_to_all(self, message):
-        self.send_to_converter(message)
-        self.send_to_controllers(message)
+        await self.send_to_converter(message)
+        await self.send_to_controllers(message)
+
+    # dispatch infos about all current connections to all endpoints
+    async def dispatch_current_connections(self):
+        currently_connected_message = { 
+                'type' : 'currently_connected', 
+                'converter' : str(self.converter),
+                'controllers' : str(self.controllers) }
+        await self.send_to_all(json.dumps(currently_connected_message))
 
     # ------- HANDLER --------
     async def handle(self, websocket, path):
@@ -171,6 +181,7 @@ class SocketServer:
                             if not success:
                                 return
                             print("{0} authenticated!".format(self.get_connection_entry(websocket)[1].get('name')))
+                            await self.dispatch_current_connections()
                             continue
                 else:
                     authenticated = True
@@ -202,6 +213,7 @@ class SocketServer:
         except Exception as e:
             print(e)
         finally:
+            await self.dispatch_current_connections()
             print("{} ---> connection closed.".format(websocket))
             await websocket.close()
             self.delete_connection(websocket)
