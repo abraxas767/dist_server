@@ -126,7 +126,7 @@ class SocketServer:
     # send a message to all connected controllers
     async def send_to_controllers(self, message):
         for obj in self.controllers:
-            if not obj.get('socket').closed:
+            if self.is_active(obj.get('socket')):
                 await obj.get('socket').send(message)
 
     # send a message to connected converter
@@ -136,7 +136,7 @@ class SocketServer:
             return 
         # if there is, send message to it
         else:
-            if not self.converter.get('socket').closed:
+            if self.is_active(self.converter.get('socket')): 
                 await self.converter.get('socket').send(message)
     
     # send a message to all conncetions
