@@ -2,6 +2,10 @@ import asyncio
 import websockets
 import json
 
+class SocketStates:
+    FAILED = 'failed'
+    SUCCESS = 'success'
+
 class SocketServer:
 
     IP_WHITELIST = ['0.0.0.0', '127.0.0.1']
@@ -144,6 +148,14 @@ class SocketServer:
         await self.send_to_converter(message)
         await self.send_to_controllers(message)
 
+    # send authentication state
+    async def send_authentication_state(self, websocket, state):
+        if self.is_active(websocket):
+            auth_state = {
+                    'type' : 'authentication_state', 
+                    'state' : state } 
+            await websocket.send(json.dumps(auth_state))
+
     # dispatch infos about all current connections to all endpoints
     async def dispatch_current_connections(self):
         currently_connected_message = { 
@@ -178,6 +190,7 @@ class SocketServer:
                             if not success:
                                 return
                             print("{0} authenticated!".format(self.get_connection_entry(websocket)[1].get('name')))
+                            await self.send_authentication_state(websocket, SocketStates.SUCCESS)
                             await self.dispatch_current_connections()
                             continue
                 else:
