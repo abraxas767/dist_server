@@ -139,6 +139,11 @@ class SocketServer:
         # if there is, send message to it
         else:
             await self.converter.get('socket').send(message)
+    
+    # send a message to all conncetions
+    async def send_to_all(self, message):
+        self.send_to_converter(message)
+        self.send_to_controllers(message)
 
     # ------- HANDLER --------
     async def handle(self, websocket, path):
