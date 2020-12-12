@@ -1,8 +1,5 @@
 import asyncio
 import websockets
-import threading
-import time
-import sys
 import json
 
 class SocketServer:
