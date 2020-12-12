@@ -213,10 +213,10 @@ class SocketServer:
         except Exception as e:
             print(e)
         finally:
+            self.delete_connection(websocket)
             await self.dispatch_current_connections()
             print("{} ---> connection closed.".format(websocket))
             await websocket.close()
-            self.delete_connection(websocket)
             return
         # ------------ HANDLER ENDS --------------
 
