@@ -1,6 +1,9 @@
 import asyncio
 import websockets
 import json
+import yaml
+import os
+import sys
 
 class SocketStates:
     FAILED = 'failed'
@@ -8,14 +11,14 @@ class SocketStates:
 
 class SocketServer:
 
-    IP_WHITELIST = ['0.0.0.0', '127.0.0.1']
     AUTH_TOKEN = '3b0e4add-1493-4cde-943c-6d47462f2a8b'
     C_TYPES = ['controller', 'converter']
     AUTH_MSG_KEYS = ['auth', 'type', 'token']
 
-    def __init__(self, host, port):
+    def __init__(self, host, port, ip_whitelist=['0.0.0.0', '127.0.0.1']):
         self.HOST = host
         self.PORT = port
+        self.IP_WHITELIST = ip_whitelist
         self.connections = []
         self.server = None
 
@@ -242,7 +245,20 @@ class SocketServer:
 
 if __name__ == "__main__":
 
-    s = SocketServer('0.0.0.0', 8888)
+    config = None
+
+    if os.path.isfile('./conf.yaml'):
+        with open('./conf.yaml', 'r') as conf:
+            config = yaml.load(conf, Loader=yaml.FullLoader)
+    else:
+        print("no configuration file \n")
+        sys.exit()
+
+    host = config.get('host')
+    port = config.get('port')
+    ip_whitelist = config.get('ip_whitelist')
+
+    s = SocketServer(host, port, ip_whitelist=ip_whitelist)
     try:
         s.run()
     except KeyboardInterrupt:
